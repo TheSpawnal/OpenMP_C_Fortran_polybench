@@ -1,6 +1,6 @@
 // #include <stdio.h>
 // #include <omp.h>
-// static long num_steps = 100000; 
+// static long num_steps = 10000; 
 // double step;
 // #define NUM_THREADS 2
 // void main()
@@ -28,7 +28,7 @@
 #include <omp.h>
 #include <stdlib.h>
 
-static long num_steps = 1000000;  // Increased for better timing
+static long num_steps = 1000000;
 double step;
 
 void calculate_pi(int num_threads)
