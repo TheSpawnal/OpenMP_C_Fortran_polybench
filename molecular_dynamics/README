@@ -1,0 +1,4 @@
+This is a simple molecular dynamics program that simulates the melting 
+of a crystal of Argonne.  
+It uses a cutoff method to compute the longrange N-body terms.
+Three different parallel versions of this program are proposed.
