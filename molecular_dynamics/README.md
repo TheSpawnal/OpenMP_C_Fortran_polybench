@@ -18,7 +18,7 @@ This project implements a molecular dynamics simulation of melting solid argon. 
 - `prnout.c` - Output printing
 - `random.c/h` - Random number generator
 
-## Parallelization Strategy
+## Parallelization Strategy(cf MolDyn3/)
 
 ### 1. Current Implementation
 
