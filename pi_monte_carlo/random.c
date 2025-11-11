@@ -20,6 +20,9 @@
 //note:
 //      changed to drandom() to avoid collision with standard libraries.
 
+#include <sys/time.h>
+#include <stdio.h>
+
 static long MULTIPLIER  = 1366;
 static long ADDEND      = 150889;
 static long PMOD        = 714025;
@@ -31,19 +34,22 @@ double drandom()
     long random_next;
     double ret_val;
 
-// 
-// compute an integer random number from zero to mod
+
+// compute an integer random number from zero to PMOD
+
     random_next = (MULTIPLIER  * random_last + ADDEND)% PMOD;
     random_last = random_next;
 
-//
+
 // shift into preset range
+
     ret_val = ((double)random_next/(double)PMOD)*(random_hi-random_low)+random_low;
     return ret_val;
 }
 
-// set the seed and the range
-void seed(double low_in, double hi_in)
+// set the range and a simple (but fixed) seed
+
+void range(double low_in, double hi_in)
 {
    if(low_in < hi_in)
    { 
@@ -59,3 +65,18 @@ void seed(double low_in, double hi_in)
 
 }
 
+// set the seed using timeofday() to get a different value
+// from one run to the next
+
+void seed()
+{
+   struct timeval tim;
+   union {
+    double d;
+    long   l;
+   } double_cast;
+
+   gettimeofday(&tim, NULL);
+   double_cast.d = tim.tv_sec*100000+tim.tv_usec;
+   random_last = (double_cast.l)%PMOD;
+}
