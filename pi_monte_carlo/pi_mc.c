@@ -1,14 +1,19 @@
 /*
- Pi_mc:  PI Monte Carlo
+
+NAME:
+   Pi_mc:  PI Monte Carlo
+
 Purpose:
    This program uses a Monte Carlo algorithm to compute PI as an
    example of how random number generators are used to solve problems.
    Note that if your goal is to find digits of pi, there are much 
    better algorithms you could use.
+
 Usage:
    To keep the program as simple as possible, you must edit the file
    and change the value of num_trials to change the number of samples
    used.  Then compile and run the program.
+
 Algorithm:
    The basic idea behind the algorithm is easy to visualize.  Draw a 
    square on a wall.  Inside the square, draw a circle.  Now randomly throw 
@@ -55,26 +60,10 @@ Algorithm details:
 
       x^2 + y^2 < or = r
 
-Supporting functions:
-   For maximum portability, this file includes a very simple random number
-   generator.  This is not a high quality generator and should not be used
-   for serious work.
-
-   The Generator is a linear congruential generator with constants selected
-   to yield decent results for sequences with fewer than 2^28 numbers.  The
-   pseudo random sequence is seeded with a range
-
-       void seed(lower_limit, higher_limit)
-   
-   and then subsequent calls to the random number generator generates values
-   in the sequence:
-
-       double random()
-
 Results:  
    Remember, our goal is to demonstrate a simple monte carlo algorithm, 
-   not compute pi.  But just for the record, here are some results (Intel compiler
-   version 10.0, Windows XP, core duo laptop)
+   not compute pi.  But just for the record, here are some results (Intel 
+   compiler version 10.0, Windows XP, core duo laptop)
 
        100        3.160000
        1000       3.148000
@@ -94,71 +83,13 @@ History:
 */
 #include <stdio.h>
 #include <omp.h>
-
-//**********************************************************
-// Pseudo random number generator:
-//     double random
-//     void seed (lower_limit, higher_limit)
-//**********************************************************
-//
-// A simple linear congruential random number generator
-// (Numerical Recipies chapter 7, 1st ed.) with parameters
-// from the table on page 198j.
-//
-//  Uses a linear congruential generator to return a value between
-//  0 and 1, then scales and shifts it to fill the desired range.  This
-//  range is set when the random number generator seed is called.
-//
-static long MULTIPLIER  = 1366;
-static long ADDEND      = 150889;
-static long PMOD        = 714025;
-long random_last = 0;
-double random_low, random_hi;
-
-double drandom()
-{
-    long random_next;
-    double ret_val;
-
-// 
-// compute an integer random number from zero to mod
-//
-    random_next = (MULTIPLIER  * random_last + ADDEND)% PMOD;
-    random_last = random_next;
-
-//
-// shift into preset range
-//
-    ret_val = ((double)random_next/(double)PMOD)*(random_hi-random_low)+random_low;
-    return ret_val;
-}
-//
-// set the seed and the range
-//
-void seed(double low_in, double hi_in)
-{
-   if(low_in < hi_in)
-   { 
-      random_low = low_in;
-      random_hi  = hi_in;
-   }
-   else
-   {
-      random_low = hi_in;
-      random_hi  = low_in;
-   }
-   random_last = PMOD/ADDEND;  // just pick something
-
-}
-//**********************************************************
-// end of pseudo random generator code.
-//**********************************************************
+#include "random.h"
 
 // 
 // The monte carlo pi program
 //
 
-static long num_trials = 100000;
+static long num_trials = 100000000;
 
 int main ()
 {
@@ -166,8 +97,8 @@ int main ()
    double pi, x, y, test;
    double r = 1.0;   // radius of circle. Side of squrare is 2*r 
 
-   seed(-r, r);  // The circle and square are centered at the origin
-
+   range(-r, r);  // The circle and square are centered at the origin
+   double time = omp_get_wtime();
    for(i=0;i<num_trials; i++)
    {
       x = drandom(); 
@@ -180,12 +111,9 @@ int main ()
 
     pi = 4.0 * ((double)Ncirc/(double)num_trials);
 
-    printf("\n %ld trials, pi is %lf \n",num_trials, pi);
+    printf("\n %ld trials, pi is %lf ",num_trials, pi);
+    printf(" in %lf seconds\n",omp_get_wtime()-time);
 
     return 0;
 }
 	  
-
-
-
-
