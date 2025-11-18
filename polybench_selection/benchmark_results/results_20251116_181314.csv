@@ -1,0 +1,85 @@
+OpenMP Benchmark Results - 20251116_181314
+System: LAPTOP-0GOGN00R - 8 cores
+
+2MM (Small)
+Threads,Strategy,Time(s)
+1,Basic Parallel,0.0379
+1,Collapsed Loops,0.0333
+1,Tiled (64x64),0.0282
+1,SIMD Vectorization,0.0141
+1,Task-based,0.0322
+2,Basic Parallel,0.0334
+2,Collapsed Loops,0.0185
+2,Tiled (64x64),0.0188
+2,SIMD Vectorization,0.0066
+2,Task-based,0.0164
+4,Basic Parallel,0.0099
+4,Collapsed Loops,0.0086
+4,Tiled (64x64),0.0103
+4,SIMD Vectorization,0.0038
+4,Task-based,0.0122
+8,Basic Parallel,0.0069
+8,Collapsed Loops,0.0073
+8,Tiled (64x64),0.0076
+8,SIMD Vectorization,0.0049
+8,Task-based,0.0081
+16,Basic Parallel,0.0076
+16,Collapsed Loops,0.0063
+16,Tiled (64x64),0.0101
+16,SIMD Vectorization,0.0061
+16,Task-based,0.0094
+
+Cholesky (Small)
+Threads,Strategy,Time(s)
+1,Column-wise Parallel,0.0288
+1,Blocked Tasks (128),0.0316
+1,Right-looking,0.0315
+1,Left-looking,0.0061
+1,Recursive,0.0227
+2,Column-wise Parallel,0.0157
+2,Blocked Tasks (128),0.0239
+2,Right-looking,0.0211
+2,Left-looking,0.0038
+2,Recursive,0.0105
+4,Column-wise Parallel,0.0113
+4,Blocked Tasks (128),0.0228
+4,Right-looking,0.0172
+4,Left-looking,0.0025
+4,Recursive,0.0061
+8,Column-wise Parallel,0.0073
+8,Blocked Tasks (128),0.0229
+8,Right-looking,0.0161
+8,Left-looking,0.0025
+8,Recursive,0.0048
+16,Column-wise Parallel,0.2822
+16,Blocked Tasks (128),0.0206
+16,Right-looking,0.2754
+16,Left-looking,0.2837
+16,Recursive,0.0054
+
+Jacobi-2D (Small)
+Threads,Strategy,Time(s)
+1,Red-Black,0.7476
+1,Wavefront,1.1829
+1,Tiled (64x64),0.4305
+1,SIMD Vectorized,0.3805
+1,Hierarchical,0.4204
+1,Temporal Blocking,0.5308
+2,Red-Black,0.4347
+2,Wavefront,1.0214
+2,Tiled (64x64),0.2663
+2,SIMD Vectorized,0.1881
+2,Hierarchical,0.2156
+2,Temporal Blocking,0.2696
+4,Red-Black,0.3220
+4,Wavefront,0.8578
+4,Tiled (64x64),0.2103
+4,SIMD Vectorized,0.1445
+4,Hierarchical,0.1833
+4,Temporal Blocking,0.2349
+8,Red-Black,0.2607
+8,Wavefront,0.8029
+8,Tiled (64x64),0.2007
+8,SIMD Vectorized,0.1060
+8,Hierarchical,0.1299
+8,Temporal Blocking,0.1486
