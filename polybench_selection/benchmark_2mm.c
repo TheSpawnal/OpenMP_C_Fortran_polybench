@@ -222,7 +222,7 @@ void init_matrices(int ni, int nj, int nk, int nl,
 }
 
 int main(int argc, char **argv) {
-    int ni = 800, nj = 900, nk = 1000, nl = 1100;
+    int ni = 800, nj = 900, nk = 1100, nl = 1200;
     
     if (argc > 1) ni = atoi(argv[1]);
     if (argc > 2) nj = atoi(argv[2]);
