@@ -1,0 +1,19 @@
+{
+  "timestamp": "20251123_224448",
+  "system": {
+    "hostname": "LAPTOP-0GOGN00R",
+    "cpu": "Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz",
+    "cores": 8,
+    "compiler": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04.2) 11.4.0"
+  },
+  "results": [
+    {"benchmark": "2mm", "size": "small", "threads": 1, "avg_time": .006720, "min_time": 0.0066, "max_time": 0.0070},
+    {"benchmark": "2mm", "size": "small", "threads": 2, "avg_time": .006640, "min_time": 0.0065, "max_time": 0.0068},
+    {"benchmark": "2mm", "size": "small", "threads": 4, "avg_time": .006800, "min_time": 0.0066, "max_time": 0.0070},
+    {"benchmark": "2mm", "size": "small", "threads": 8, "avg_time": .006680, "min_time": 0.0066, "max_time": 0.0067},
+    {"benchmark": "2mm", "size": "medium", "threads": 1, "avg_time": .007000, "min_time": 0.0066, "max_time": 0.0074},
+    {"benchmark": "2mm", "size": "medium", "threads": 2, "avg_time": .006800, "min_time": 0.0065, "max_time": 0.0071},
+    {"benchmark": "2mm", "size": "medium", "threads": 4, "avg_time": .006880, "min_time": 0.0066, "max_time": 0.0078},
+    {"benchmark": "2mm", "size": "medium", "threads": 8, "avg_time": .006720, "min_time": 0.0065, "max_time": 0.0070}
+  ]
+}

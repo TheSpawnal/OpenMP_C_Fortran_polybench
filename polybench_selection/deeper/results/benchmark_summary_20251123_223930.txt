@@ -1,0 +1,9 @@
+=== System Information ===
+Date: Sun Nov 23 22:39:30 CET 2025
+Hostname: LAPTOP-0GOGN00R
+CPU: Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz
+Cores: 8
+Memory: 3.7Gi
+Compiler: gcc (Ubuntu 11.4.0-1ubuntu1~22.04.2) 11.4.0
+OpenMP: 201511
+

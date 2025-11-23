@@ -1,6 +1,6 @@
 
 
-# Advanced Benchmarks: HEAT-3D & Dynamic Programming
+# Advanced Benchmarks: HEAT-3D
 
 ##  **State-of-the-Art Stencil & DP Implementations**
 
@@ -16,7 +16,7 @@ The 3D heat equation represents a fundamental pattern in scientific computing - 
 - **Boundary Conditions**: Fixed temperature (Dirichlet)
 - **Time Integration**: Explicit Euler with Jacobi iteration
 
-### Implementation Strategies (10 variants!)
+### Implementation Strategies (10 variants)
 
 1. **Sequential Baseline**
    - Standard Jacobi iteration with double buffering
@@ -92,81 +92,6 @@ for each element {
 | Cache Reuse | Poor | Good (blocked) | Optimal (time-blocked) |
 | Vectorization | None | 4x (AVX2) | 8x (AVX-512) |
 
-##  **Advanced Dynamic Programming Suite**
-
-### Algorithms Implemented
-
-1. **Sequence Alignment (Needleman-Wunsch)**
-   - Global alignment with affine gap penalties
-   - Wavefront parallelization
-   - Tiled with dependency tracking
-
-2. **Matrix Chain Multiplication**
-   - Optimal parenthesization
-   - Parallel by chain length
-   - SIMD reduction for minimum
-
-3. **Longest Common Subsequence**
-   - Classic DP with anti-diagonal parallelism
-   - Cache-optimized traversal
-
-4. **0/1 Knapsack Problem**
-   - Row-wise parallelization
-   - Memory-efficient implementation
-
-5. **Edit Distance (Levenshtein)**
-   - String transformation operations
-   - Diagonal wavefront processing
-
-### Parallelization Strategies
-
-#### Wavefront/Anti-diagonal Pattern
-```c
-for (int wave = 2; wave <= m + n; wave++) {
-    #pragma omp parallel for
-    for (int i = 1; i <= m; i++) {
-        int j = wave - i;
-        if (j >= 1 && j <= n) {
-            // Independent computation
-            dp[i][j] = compute(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
-        }
-    }
-}
-```
-
-**Advantages:**
-- Preserves dependencies
-- Good load balancing for middle waves
-- Scalable to many threads
-
-**Challenges:**
-- Poor parallelism at wave boundaries
-- Synchronization overhead per wave
-- Cache locality issues
-
-#### Tiled with Dependencies
-```c
-#pragma omp task depend(in: dp[i-1][j-1:tile], dp[i-1:tile][j-1]) \
-                 depend(out: dp[i:tile][j:tile])
-{
-    // Process tile respecting dependencies
-}
-```
-
-**Benefits:**
-- Better cache utilization
-- Reduced synchronization
-- Task-based load balancing
-
-### Performance Analysis
-
-| Algorithm | Sequential | Parallel (8 threads) | Speedup | Limiting Factor |
-|-----------|-----------|---------------------|---------|-----------------|
-| Sequence Alignment | O(mn) | O(mn/(m+n)) | 3-5x | Wave imbalance |
-| Matrix Chain | O(n³) | O(n³/p) | 6-7x | Good scaling |
-| LCS | O(mn) | O(mn/(m+n)) | 3-4x | Dependencies |
-| Knapsack | O(nW) | O(nW/p) | 7-8x | Row independence |
-| Edit Distance | O(mn) | O(mn/(m+n)) | 3-4x | Anti-diagonal |
 
 ##  **Architecture Considerations**
 
@@ -178,11 +103,11 @@ for (int wave = 2; wave <= m + n; wave++) {
 - Time blocking reduces traffic by ~2-10x
 - Prefetching helps with streaming access
 
-**Dynamic Programming:**
+<!-- **Dynamic Programming:**
 - Working set: (M+1) × (N+1) × sizeof(int)
 - Row-major vs column-major impacts performance
 - Tile size should fit in L2 cache
-- Alignment prevents false sharing
+- Alignment prevents false sharing -->
 
 ### NUMA Considerations
 
@@ -207,10 +132,6 @@ for (int i = 0; i < n; i++) {
 - Compiler auto-vectorization with `-O3 -march=native`
 - Manual intrinsics for guaranteed vectorization
 
-**DP Algorithms:**
-- Limited by dependencies
-- Min/max reductions can use SIMD
-- Comparison operations vectorizable with masks
 
 ##  **Key Insights**
 
@@ -220,13 +141,6 @@ for (int i = 0; i < n; i++) {
 3. **FEM assembly patterns** - Different parallelization model
 4. **Red-black can converge faster** - Worth synchronization cost
 5. **Wavefront maximizes reuse** - Complex but effective
-
-### Dynamic Programming Lessons
-1. **Dependencies limit parallelism** - Wavefront best approach
-2. **Load imbalance inherent** - Dynamic scheduling helps
-3. **Cache blocking critical** - Tiles must respect dependencies
-4. **Task-based flexible** - Adapts to irregular patterns
-5. **Problem-specific optimizations** - No one-size-fits-all
 
 ##  **Comparison with Julia**
 
@@ -261,8 +175,6 @@ make SIZE=MEDIUM
 # Run HEAT-3D
 OMP_NUM_THREADS=8 ./benchmark_heat3d
 
-# Run Dynamic Programming Suite
-OMP_NUM_THREADS=8 ./benchmark_dynprog_advanced
 
 # For large problems (DAS-5)
 make SIZE=LARGE
@@ -325,10 +237,8 @@ These advanced benchmarks demonstrate:
 - **Complex dependency management** in DP algorithms
 - **Architecture-aware optimizations** for modern CPUs
 
-Combined with our initial suite, we now have comprehensive coverage of:
+Uur initial suite now have coverage of:
 - Compute-bound (2MM, 3MM)
 - Memory-bound (HEAT-3D, Correlation)
 - Dependency-heavy (Cholesky, DP algorithms)
 - Irregular patterns (Nussinov, Graph algorithms)
-
-**Ready for performance analysis and Julia comparison** 🐉

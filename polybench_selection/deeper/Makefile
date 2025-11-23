@@ -1,239 +1,186 @@
-# Makefile for 2D Dynamic Programming OpenMP Benchmark
-#
-# Usage:
-#   make              # Build with default compiler (gcc)
-#   make intel        # Build with Intel compiler
-#   make clang        # Build with Clang
-#   make run          # Build and run with default parameters
-#   make test         # Run multiple problem sizes
-#   make clean        # Remove built files
+# Makefile for OpenMP PolyBench Benchmark Suite
+# Supports multiple compilers and optimization levels
 
 # Compiler selection
-CC = gcc
-ICC = icc
-CLANG = clang
+CC ?= gcc
+# Alternative: CC = icc
+# Alternative: CC = clang
 
-# Base compilation flags
-CFLAGS_BASE = -O3 -march=native -Wall -Wextra
-LDFLAGS = -lm
+# Base flags
+CFLAGS_BASE = -fopenmp -march=native -std=c11 -Wall
+LDFLAGS = -lm -fopenmp
 
-# OpenMP flags per compiler
-OPENMP_GCC = -fopenmp
-OPENMP_ICC = -qopenmp
-OPENMP_CLANG = -fopenmp
+# Optimization levels
+CFLAGS_O3 = $(CFLAGS_BASE) -O3 -funroll-loops -ftree-vectorize
+CFLAGS_O2 = $(CFLAGS_BASE) -O2
+CFLAGS_DEBUG = $(CFLAGS_BASE) -O0 -g -DDEBUG
+CFLAGS_PROFILE = $(CFLAGS_BASE) -O3 -pg -fno-omit-frame-pointer
 
-# Default target
-TARGET = dynprog
+# Default optimization
+CFLAGS ?= $(CFLAGS_O3)
 
-# Default problem size and threads
-SIZE = 4000
-THREADS = $(shell nproc 2>/dev/null || echo 4)
+# PAPI support (optional)
+ifdef USE_PAPI
+    CFLAGS += -DUSE_PAPI
+    LDFLAGS += -lpapi
+endif
 
-# Compiler-specific targets
-.PHONY: all gcc intel clang
+# Problem size selection
+ifdef SIZE
+    ifeq ($(SIZE),MINI)
+        CFLAGS += -DMINI
+    else ifeq ($(SIZE),SMALL)
+        CFLAGS += -DSMALL
+    else ifeq ($(SIZE),MEDIUM)
+        CFLAGS += -DMEDIUM
+    else ifeq ($(SIZE),LARGE)
+        CFLAGS += -DLARGE
+    else ifeq ($(SIZE),EXTRALARGE)
+        CFLAGS += -DEXTRALARGE
+    endif
+else
+    # Default to STANDARD size
+    CFLAGS += -DSTANDARD
+endif
 
-all: gcc
+# Source files
+BENCHMARKS = benchmark_2mm benchmark_3mm benchmark_cholesky \
+             benchmark_correlation benchmark_nussinov
 
-gcc: CC = gcc
-gcc: OPENMP_FLAGS = $(OPENMP_GCC)
-gcc: $(TARGET)
+METRICS_SRC = benchmark_metrics.c
+METRICS_OBJ = benchmark_metrics.o
 
-intel: CC = $(ICC)
-intel: OPENMP_FLAGS = $(OPENMP_ICC)
-intel: CFLAGS_BASE += -xHost
-intel: $(TARGET)
+# Executable targets
+TARGETS = $(BENCHMARKS)
 
-clang: CC = $(CLANG)
-clang: OPENMP_FLAGS = $(OPENMP_CLANG)
-clang: $(TARGET)
+# Build rules
+all: $(TARGETS)
 
-# Main build rule
-$(TARGET): $(TARGET).c
-	$(CC) $(CFLAGS_BASE) $(OPENMP_FLAGS) -o $@ $< $(LDFLAGS)
-	@echo "════════════════════════════════════════════════════════════"
-	@echo "  Built: $(TARGET)"
-	@echo "  Compiler: $(CC)"
-	@echo "  Flags: $(CFLAGS_BASE) $(OPENMP_FLAGS)"
-	@echo "════════════════════════════════════════════════════════════"
+# Metrics object file
+$(METRICS_OBJ): $(METRICS_SRC) benchmark_metrics.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Run targets
-.PHONY: run test bench profile
+# Pattern rule for benchmarks
+benchmark_%: benchmark_%.c $(METRICS_OBJ) benchmark_metrics.h
+	$(CC) $(CFLAGS) $< $(METRICS_OBJ) -o $@ $(LDFLAGS)
 
-run: $(TARGET)
-	@echo "Running with SIZE=$(SIZE), THREADS=$(THREADS)"
-	OMP_NUM_THREADS=$(THREADS) ./$(TARGET) $(SIZE)
+# Alternative build configurations
+debug: CFLAGS = $(CFLAGS_DEBUG)
+debug: clean all
 
-test: $(TARGET)
-	@echo "════════════════════════════════════════════════════════════"
-	@echo "  Testing multiple problem sizes"
-	@echo "════════════════════════════════════════════════════════════"
-	@for size in 1000 2000 4000 8000; do \
-		echo ""; \
-		echo "Testing SIZE=$$size with $(THREADS) threads..."; \
-		echo "────────────────────────────────────────────────────────────"; \
-		OMP_NUM_THREADS=$(THREADS) ./$(TARGET) $$size || exit 1; \
+profile: CFLAGS = $(CFLAGS_PROFILE)
+profile: clean all
+
+o2: CFLAGS = $(CFLAGS_O2)
+o2: clean all
+
+# Size-specific builds
+mini: SIZE = MINI
+mini: clean all
+
+small: SIZE = SMALL
+small: clean all
+
+medium: SIZE = MEDIUM
+medium: clean all
+
+large: SIZE = LARGE
+large: clean all
+
+xlarge: SIZE = EXTRALARGE
+xlarge: clean all
+
+# Intel compiler build
+intel:
+	$(MAKE) CC=icc CFLAGS="-qopenmp -O3 -xHost -ipo -qopt-report=5"
+
+# Clang compiler build
+clang:
+	$(MAKE) CC=clang CFLAGS="-fopenmp -O3 -march=native -Rpass=loop-vectorize"
+
+# PAPI-enabled build
+papi:
+	$(MAKE) USE_PAPI=1
+
+# Run tests with small problem size
+test: small
+	@echo "=== Running Quick Tests ==="
+	@for bench in $(BENCHMARKS); do \
+		echo "\nTesting $$bench..."; \
+		OMP_NUM_THREADS=4 ./$$bench || exit 1; \
+	done
+	@echo "\n=== All tests passed ==="
+
+# Run comprehensive benchmark suite
+benchmark: medium
+	@echo "=== Running Comprehensive Benchmarks ==="
+	@./run_benchmarks.sh
+
+# Run with profiling
+perf: profile
+	@for bench in $(BENCHMARKS); do \
+		echo "Profiling $$bench..."; \
+		OMP_NUM_THREADS=8 perf record -g ./$$bench; \
+		perf report --stdio > $$bench.perf; \
 	done
 
-bench: $(TARGET)
-	@echo "════════════════════════════════════════════════════════════"
-	@echo "  Scaling benchmark: varying thread counts"
-	@echo "════════════════════════════════════════════════════════════"
-	@for threads in 1 2 4 8 16; do \
-		echo ""; \
-		echo "Running with $$threads threads..."; \
-		echo "────────────────────────────────────────────────────────────"; \
-		OMP_NUM_THREADS=$$threads ./$(TARGET) $(SIZE) $$threads || exit 1; \
+# Generate assembly for analysis
+asm:
+	@for src in $(BENCHMARKS:=.c); do \
+		$(CC) $(CFLAGS) -S -fverbose-asm $$src -o $${src%.c}.s; \
 	done
 
-# Performance profiling
-profile: CFLAGS_BASE += -g
-profile: $(TARGET)
-	@echo "Building with profiling symbols..."
-	@echo "Run: perf record -g ./$(TARGET) $(SIZE)"
-	@echo "Then: perf report"
+# Check vectorization
+vec-report:
+	$(MAKE) clean
+	$(MAKE) CC=gcc CFLAGS="$(CFLAGS_O3) -fopt-info-vec-all=vectorization.log"
+	@echo "Vectorization report saved to vectorization.log"
 
-# Optimization exploration
-.PHONY: opt-levels
+# Clean build artifacts
+clean:
+	rm -f $(TARGETS) $(METRICS_OBJ) *.o *.s *.perf *.log
+	rm -f gmon.out core
+	rm -rf *.dSYM
 
-opt-levels:
-	@echo "════════════════════════════════════════════════════════════"
-	@echo "  Testing different optimization levels"
-	@echo "════════════════════════════════════════════════════════════"
-	@for opt in O0 O1 O2 O3 Ofast; do \
-		echo ""; \
-		echo "Building with -$$opt..."; \
-		$(CC) -$$opt -march=native $(OPENMP_GCC) -o $(TARGET)_$$opt $(TARGET).c $(LDFLAGS); \
-		echo "Testing -$$opt:"; \
-		time OMP_NUM_THREADS=$(THREADS) ./$(TARGET)_$$opt 2000 | tail -n 5; \
-		rm -f $(TARGET)_$$opt; \
-	done
-
-# Architecture-specific builds
-.PHONY: native avx2 avx512
-
-native: CFLAGS_BASE += -march=native
-native: $(TARGET)
-
-avx2: CFLAGS_BASE += -mavx2 -mfma
-avx2: $(TARGET)
-
-avx512: CFLAGS_BASE += -mavx512f -mavx512dq
-avx512: $(TARGET)
-
-# Debugging builds
-.PHONY: debug sanitize
-
-debug: CFLAGS_BASE = -O0 -g -Wall -Wextra
-debug: $(TARGET)
-	@echo "Built debug version with -O0 -g"
-
-sanitize: CFLAGS_BASE += -g -fsanitize=thread
-sanitize: LDFLAGS += -fsanitize=thread
-sanitize: $(TARGET)
-	@echo "Built with thread sanitizer"
-	@echo "Run with: ./$(TARGET) 500"
-
-# Static analysis
-.PHONY: analyze
-
-analyze:
-	@echo "Running static analysis..."
-	$(CC) $(CFLAGS_BASE) $(OPENMP_GCC) -fanalyzer -o /dev/null $(TARGET).c 2>&1 | head -20
-
-# Documentation
-.PHONY: docs
-
-docs:
-	@echo "════════════════════════════════════════════════════════════"
-	@echo "  2D Dynamic Programming Benchmark"
-	@echo "════════════════════════════════════════════════════════════"
-	@echo ""
-	@echo "COMPILATION:"
-	@echo "  make              # Default GCC build"
-	@echo "  make intel        # Intel compiler build"
-	@echo "  make clang        # Clang build"
-	@echo "  make debug        # Debug build (-O0 -g)"
-	@echo "  make sanitize     # Thread sanitizer build"
-	@echo ""
-	@echo "EXECUTION:"
-	@echo "  make run          # Run with default size ($(SIZE))"
-	@echo "  make run SIZE=8000 THREADS=16"
-	@echo "  make test         # Test multiple sizes"
-	@echo "  make bench        # Thread scaling benchmark"
-	@echo ""
-	@echo "OPTIMIZATION:"
-	@echo "  make native       # Native architecture"
-	@echo "  make avx2         # AVX2 instructions"
-	@echo "  make avx512       # AVX-512 instructions"
-	@echo "  make opt-levels   # Test O0, O1, O2, O3, Ofast"
-	@echo ""
-	@echo "ENVIRONMENT VARIABLES:"
-	@echo "  OMP_NUM_THREADS      # Set thread count"
-	@echo "  OMP_PROC_BIND        # Thread binding (spread/close/master)"
-	@echo "  OMP_PLACES           # Thread placement (threads/cores/sockets)"
-	@echo "  OMP_SCHEDULE         # Default schedule (static/dynamic/guided)"
-	@echo ""
-	@echo "EXAMPLES:"
-	@echo "  # Run with 8 threads on 4000x4000 matrix"
-	@echo "  OMP_NUM_THREADS=8 ./dynprog 4000"
-	@echo ""
-	@echo "  # Spread threads across cores"
-	@echo "  OMP_PROC_BIND=spread OMP_PLACES=cores ./dynprog 8000"
-	@echo ""
-	@echo "  # Run all tests with thread affinity"
-	@echo "  OMP_PROC_BIND=spread OMP_PLACES=cores make test"
-	@echo ""
-	@echo "For detailed documentation, see README_dynprog.md"
-	@echo "════════════════════════════════════════════════════════════"
+# Clean everything including results
+distclean: clean
+	rm -f results/*.csv results/*.json results/*.txt
+	rm -f *.png *.svg *.pdf
 
 # Help target
-.PHONY: help
-help: docs
-
-# Cleanup
-.PHONY: clean distclean
-
-clean:
-	rm -f $(TARGET) $(TARGET)_*
-	@echo "Cleaned build artifacts"
-
-distclean: clean
-	rm -f *.o *.out core.*
-	@echo "Deep clean completed"
-
-# Version info
-.PHONY: version
-
-version:
-	@echo "Compiler versions:"
-	@echo "─────────────────────────────────────────────────────────────"
-	@echo -n "GCC: "; $(CC) --version | head -1 || echo "not found"
-	@echo -n "ICC: "; $(ICC) --version | head -1 2>/dev/null || echo "not found"
-	@echo -n "Clang: "; $(CLANG) --version | head -1 2>/dev/null || echo "not found"
+help:
+	@echo "OpenMP PolyBench Benchmark Suite - Makefile Usage"
+	@echo "================================================="
 	@echo ""
-	@echo "OpenMP support:"
-	@echo "─────────────────────────────────────────────────────────────"
-	@echo "Testing GCC OpenMP..."
-	@$(CC) $(OPENMP_GCC) -o /tmp/omp_test -x c - <<< 'int main(){return 0;}' 2>/dev/null && echo "  GCC: ✓ Supported" || echo "  GCC: ✗ Not supported"
-	@rm -f /tmp/omp_test
+	@echo "Basic targets:"
+	@echo "  make [all]       - Build all benchmarks with O3 optimization"
+	@echo "  make debug       - Build with debug symbols"
+	@echo "  make profile     - Build with profiling support"
+	@echo "  make test        - Run quick tests with small problem size"
+	@echo "  make benchmark   - Run comprehensive benchmark suite"
+	@echo "  make clean       - Remove build artifacts"
+	@echo ""
+	@echo "Size-specific builds:"
+	@echo "  make mini        - Build with MINI problem size"
+	@echo "  make small       - Build with SMALL problem size"
+	@echo "  make medium      - Build with MEDIUM problem size (default)"
+	@echo "  make large       - Build with LARGE problem size"
+	@echo "  make xlarge      - Build with EXTRALARGE problem size"
+	@echo ""
+	@echo "Compiler-specific builds:"
+	@echo "  make intel       - Build with Intel compiler"
+	@echo "  make clang       - Build with Clang compiler"
+	@echo ""
+	@echo "Analysis targets:"
+	@echo "  make asm         - Generate assembly code"
+	@echo "  make vec-report  - Generate vectorization report"
+	@echo "  make perf        - Run with perf profiling"
+	@echo ""
+	@echo "Variables:"
+	@echo "  CC=<compiler>    - Set compiler (gcc/icc/clang)"
+	@echo "  SIZE=<size>      - Set problem size"
+	@echo "  USE_PAPI=1       - Enable PAPI support"
 
-# Installation
-PREFIX ?= /usr/local
-.PHONY: install uninstall
-
-install: $(TARGET)
-	install -d $(PREFIX)/bin
-	install -m 755 $(TARGET) $(PREFIX)/bin/
-	@echo "Installed to $(PREFIX)/bin/$(TARGET)"
-
-uninstall:
-	rm -f $(PREFIX)/bin/$(TARGET)
-	@echo "Uninstalled $(PREFIX)/bin/$(TARGET)"
-
-# Continuous integration
-.PHONY: ci
-
-ci: clean all test
-	@echo "════════════════════════════════════════════════════════════"
-	@echo "  CI pipeline completed successfully"
-	@echo "════════════════════════════════════════════════════════════"
+.PHONY: all clean distclean test benchmark debug profile o2 \
+        mini small medium large xlarge intel clang papi \
+        perf asm vec-report help

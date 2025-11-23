@@ -159,7 +159,7 @@ For large-scale testing on DAS-5:
 module load gcc/10.2.0
 module load openmpi/4.0.5
 
-# Build for large problems
+# Build for larg problems
 make clean && make SIZE=LARGE
 
 # Run with specific node configuration
@@ -178,7 +178,6 @@ sbatch benchmark_job.sh
 6. **Generate visualizations** for report
 
 ##  **Summary**
-
 This benchmark suite provides:
 -  5 diverse computational kernels
 -  6-8 parallelization strategies per kernel
@@ -189,6 +188,5 @@ This benchmark suite provides:
 -  Production-ready code with error checking
 -  Comprehensive documentation
 
-The suite respects the original PolyBench/C 4.2.1 structure while adding state-of-the-art parallelization strategies and enhanced metrics suitable for modern performance analysis and cross-language comparison.
+The suite respects the original PolyBench/C 4.2.1 structure while adding  parallelization strategies and enhanced metrics suitable for modern performance analysis and cross-language comparison.
 
-**Ready for testing and deployment!**
