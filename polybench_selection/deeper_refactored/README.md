@@ -1,11 +1,10 @@
 # OpenMP PolyBench Benchmark Suite
 
-## 🔥 State-of-the-Art Parallel Computing Benchmarks
+##State-of-the-Art Parallel Computing Benchmarks
 
 A comprehensive benchmark suite implementing multiple parallelization strategies for PolyBench/C kernels using OpenMP. Designed for systematic performance evaluation, comparison with Julia implementations, and generation of publication-quality visualizations.
 
-## 📊 Benchmarks Included
-
+##  Benchmarks Included
 ### 1. **2MM** - Two Matrix Multiplications
 - **Computation**: D = α·A·B·C + β·D
 - **Characteristics**: Compute-intensive, regular patterns
@@ -31,8 +30,7 @@ A comprehensive benchmark suite implementing multiple parallelization strategies
 - **Characteristics**: Wavefront parallelism, irregular dependencies
 - **Strategies**: 6 implementations including wavefront, pipeline, hybrid
 
-## 🚀 Quick Start
-
+##  Quick Start
 ### Prerequisites
 ```bash
 # Required
@@ -61,7 +59,7 @@ chmod +x run_benchmarks.sh
 make medium       # or mini, small, large, xlarge
 ```
 
-## 📈 Enhanced Performance Metrics
+## Enhanced Performance Metrics
 
 ### Primary Metrics
 1. **Time-based Performance**
@@ -221,7 +219,7 @@ Benchmark,Size,Threads,Avg_Time,Min_Time,Max_Time
 }
 ```
 
-## 🔬 Advanced Analysis
+## Advanced Analysis
 
 ### Profiling
 ```bash
