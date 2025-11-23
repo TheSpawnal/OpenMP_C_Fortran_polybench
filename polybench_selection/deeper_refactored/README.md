@@ -317,7 +317,6 @@ python3 generate_heatmap.py results/benchmark_results.csv
    - For SIMD: ensure `-march=native` or specify architecture
 
 ##  Contributing
-
 Contributions welcome! Areas of interest:
 - Additional parallelization strategies
 - GPU offloading with OpenMP 5.0
