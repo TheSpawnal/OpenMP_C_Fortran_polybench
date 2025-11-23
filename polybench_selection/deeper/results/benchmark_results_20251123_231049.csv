@@ -1,0 +1,7 @@
+Benchmark,Size,Threads,Avg_Time,Min_Time,Max_Time
+2mm,small,1,.003340,0.0032,0.0035
+2mm,small,2,.003280,0.0031,0.0034
+2mm,small,4,.003380,0.0031,0.0039
+2mm,small,8,.003340,0.0032,0.0035
+2mm,small,16,.003460,0.0033,0.0037
+3mm,small,1,.006800,0.0065,0.0070
