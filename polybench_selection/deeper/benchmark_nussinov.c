@@ -31,7 +31,7 @@
 #elif defined(LARGE)
 #define N 2500
 #else // Default STANDARD
-#define N 1000
+#define N 500
 #endif
 
 #define ALIGN_SIZE 64

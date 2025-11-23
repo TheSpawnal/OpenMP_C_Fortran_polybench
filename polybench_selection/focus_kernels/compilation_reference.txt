@@ -1,0 +1,331 @@
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                    QUICK COMPILATION REFERENCE GUIDE                          │
+│                     OpenMP PolyBench Optimization                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+  BASIC COMPILATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Standard build (O3, native architecture):
+    gcc -fopenmp -O3 -march=native \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+With specific problem size:
+    gcc -fopenmp -O3 -march=native -DSMALL \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+3MM benchmark:
+    gcc -fopenmp -O3 -march=native \
+        benchmark_3mm.c benchmark_metrics.c -o bench_3mm -lm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  OPTIMIZATION LEVELS
+═══════════════════════════════════════════════════════════════════════════════
+
+Conservative (safe, good optimization):
+    -O2
+
+Aggressive (maximum safe optimization):
+    -O3
+
+Ultra-aggressive (may affect precision):
+    -Ofast
+
+Add vectorization info:
+    -O3 -fopt-info-vec-optimized -fopt-info-vec-missed
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  ARCHITECTURE-SPECIFIC FLAGS
+═══════════════════════════════════════════════════════════════════════════════
+
+Auto-detect current CPU:
+    -march=native -mtune=native
+
+Specific for i5-10210U (Comet Lake):
+    -march=comet-lake -mavx2 -mfma
+
+Generic modern Intel:
+    -march=haswell
+
+Zen 2/3 AMD:
+    -march=znver2  # or znver3
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  ADVANCED OPTIMIZATION FLAGS
+═══════════════════════════════════════════════════════════════════════════════
+
+Full optimization suite:
+    gcc -fopenmp -O3 -march=native -mtune=native \
+        -ffast-math -funroll-loops -ftree-vectorize \
+        -fprefetch-loop-arrays \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+With aggressive math optimizations:
+    gcc -fopenmp -Ofast -march=native \
+        -fno-signed-zeros -fno-trapping-math \
+        -fassociative-math -freciprocal-math \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+Enable all SIMD extensions (i5-10210U):
+    gcc -fopenmp -O3 -march=native \
+        -msse4.2 -mavx -mavx2 -mfma \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  PROBLEM SIZE DEFINITIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Macro          2MM Sizes                    3MM Sizes
+─────────────  ───────────────────────      ──────────────────────────
+-DMINI         16×18×22×24                  16×18×20×22×24
+-DSMALL        40×50×70×80                  40×50×60×70×80
+-DMEDIUM       180×190×210×220              180×190×200×210×220
+-DLARGE        800×900×1100×1200            800×900×1000×1100×1200
+(default)      100×120×140×160              100×120×140×160×180
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  LINK-TIME OPTIMIZATION (LTO)
+═══════════════════════════════════════════════════════════════════════════════
+
+Single-command LTO:
+    gcc -fopenmp -O3 -march=native -flto \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+Multi-stage LTO (better for large projects):
+    gcc -fopenmp -O3 -march=native -flto -c benchmark_2mm.c
+    gcc -fopenmp -O3 -march=native -flto -c benchmark_metrics.c
+    gcc -fopenmp -O3 -march=native -flto \
+        benchmark_2mm.o benchmark_metrics.o -o bench_2mm -lm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  PROFILE-GUIDED OPTIMIZATION (PGO)
+═══════════════════════════════════════════════════════════════════════════════
+
+Step 1 - Compile with instrumentation:
+    gcc -fopenmp -O3 -march=native -fprofile-generate \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm_prof -lm
+
+Step 2 - Run to collect profile data:
+    ./bench_2mm_prof
+    # This creates .gcda files
+
+Step 3 - Recompile using profile:
+    gcc -fopenmp -O3 -march=native -fprofile-use \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+Step 4 - Clean up profile data:
+    rm -f *.gcda
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  DEBUG AND ANALYSIS BUILDS
+═══════════════════════════════════════════════════════════════════════════════
+
+Debug build (with optimization):
+    gcc -fopenmp -O2 -g -march=native \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm_debug -lm
+
+Generate assembly listing:
+    gcc -fopenmp -O3 -march=native -S -fverbose-asm \
+        benchmark_2mm.c -o bench_2mm.s
+
+Generate optimization report:
+    gcc -fopenmp -O3 -march=native \
+        -fopt-info-all=optimization_report.txt \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  CORRECTNESS CHECKING (SANITIZERS)
+═══════════════════════════════════════════════════════════════════════════════
+
+Thread sanitizer (detect race conditions):
+    gcc -fopenmp -O1 -g -fsanitize=thread \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm_tsan -lm
+    ./bench_2mm_tsan
+
+Address sanitizer (detect memory errors):
+    gcc -fopenmp -O1 -g -fsanitize=address \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm_asan -lm
+    ./bench_2mm_asan
+
+Undefined behavior sanitizer:
+    gcc -fopenmp -O1 -g -fsanitize=undefined \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm_ubsan -lm
+    ./bench_2mm_ubsan
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  RUNTIME CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Set number of threads:
+    export OMP_NUM_THREADS=4
+    ./bench_2mm
+
+Set thread affinity (bind threads to cores):
+    export OMP_PROC_BIND=true
+    export OMP_PLACES=cores
+    ./bench_2mm
+
+Enable nested parallelism:
+    export OMP_NESTED=true
+    export OMP_MAX_ACTIVE_LEVELS=2
+    ./bench_2mm
+
+Control scheduling:
+    export OMP_SCHEDULE="static,32"    # Static with chunk size 32
+    export OMP_SCHEDULE="dynamic,16"   # Dynamic with chunk size 16
+    export OMP_SCHEDULE="guided"       # Guided scheduling
+    ./bench_2mm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  PERFORMANCE PROFILING
+═══════════════════════════════════════════════════════════════════════════════
+
+Using perf (Linux):
+    # Compile with debug info
+    gcc -fopenmp -O3 -march=native -g \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+    
+    # Profile execution
+    perf record -g ./bench_2mm
+    
+    # View results
+    perf report
+    
+    # CPU cycles and instructions
+    perf stat -e cycles,instructions,cache-references,cache-misses \
+        ./bench_2mm
+
+Using gprof:
+    gcc -fopenmp -O3 -march=native -pg \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+    ./bench_2mm
+    gprof bench_2mm gmon.out > analysis.txt
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  CLANG COMPILATION (ALTERNATIVE COMPILER)
+═══════════════════════════════════════════════════════════════════════════════
+
+Basic Clang compilation:
+    clang -fopenmp -O3 -march=native \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+With Clang-specific optimizations:
+    clang -fopenmp -O3 -march=native \
+        -Rpass=loop-vectorize -Rpass-missed=loop-vectorize \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  BATCH TESTING EXAMPLES
+═══════════════════════════════════════════════════════════════════════════════
+
+Test all optimization levels:
+    for opt in O2 O3 Ofast; do
+        gcc -fopenmp -$opt -march=native -DMEDIUM \
+            benchmark_2mm.c benchmark_metrics.c -o bench_2mm_$opt -lm
+        echo "Testing -$opt:"
+        OMP_NUM_THREADS=8 ./bench_2mm_$opt | grep Sequential
+    done
+
+Test all problem sizes:
+    for size in MINI SMALL MEDIUM LARGE; do
+        gcc -fopenmp -O3 -march=native -D$size \
+            benchmark_2mm.c benchmark_metrics.c -o bench_2mm_$size -lm
+        echo "Testing $size:"
+        OMP_NUM_THREADS=4 ./bench_2mm_$size
+    done
+
+Thread scaling study:
+    gcc -fopenmp -O3 -march=native -DMEDIUM \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+    
+    for threads in 1 2 4 8 16; do
+        echo "=== $threads threads ==="
+        OMP_NUM_THREADS=$threads ./bench_2mm | grep -E "Time|Speedup"
+    done
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  RECOMMENDED COMPILATION FOR YOUR i5-10210U
+═══════════════════════════════════════════════════════════════════════════════
+
+Best overall performance:
+    gcc -fopenmp -O3 -march=native -mtune=native \
+        -ffast-math -funroll-loops -mavx2 -mfma \
+        benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+Testing configuration (4 physical cores):
+    export OMP_NUM_THREADS=4
+    export OMP_PROC_BIND=true
+    export OMP_PLACES=cores
+    ./bench_2mm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+Issue: "undefined reference to `omp_get_wtime'"
+Fix:   Add -fopenmp flag
+
+Issue: "undefined reference to `sqrt'"
+Fix:   Add -lm flag at the end
+
+Issue: Slow performance with many threads
+Fix:   Check: export OMP_PROC_BIND=true
+       Verify actual core count: lscpu
+
+Issue: Different results between runs
+Check: Floating-point optimization flags (-ffast-math)
+Fix:   Use -O3 instead of -Ofast for reproducibility
+
+Issue: Segmentation fault
+Check: Stack size - may need: ulimit -s unlimited
+Check: Alignment - ensure posix_memalign succeeds
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  USEFUL SYSTEM COMMANDS
+═══════════════════════════════════════════════════════════════════════════════
+
+Check CPU info:
+    lscpu
+    cat /proc/cpuinfo | grep -E "model name|cpu cores|flags"
+
+Check OpenMP version:
+    echo | gcc -fopenmp -dM -E - | grep -i openmp
+
+Check available optimizations:
+    gcc -Q -O3 --help=optimizers | grep enabled
+
+Monitor CPU usage during run:
+    htop -u $USER
+
+Check memory usage:
+    /usr/bin/time -v ./bench_2mm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+* Always compile with -march=native for best performance on current CPU
+* Use -ffast-math only if small floating-point errors are acceptable
+* For production: Test with and without optimization flags
+* Thread count should typically match physical core count (4 for i5-10210U)
+* Hyperthreading may help memory-bound code (try 8 threads)
+* PGO can provide 5-15% improvement but requires representative workload
+
+═══════════════════════════════════════════════════════════════════════════════

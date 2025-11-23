@@ -1,0 +1,242 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    QUICK COMMAND REFERENCE CARD                             ║
+║                   Copy-Paste Ready Compilation Commands                     ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ RECOMMENDED BUILD (Best for i5-10210U)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+gcc -fopenmp -O3 -march=native -mtune=native -ffast-math -funroll-loops \
+    -mavx2 -mfma benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+gcc -fopenmp -O3 -march=native -mtune=native -ffast-math -funroll-loops \
+    -mavx2 -mfma benchmark_3mm.c benchmark_metrics.c -o bench_3mm -lm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ QUICK TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Build and run with optimal threads (4 physical cores)
+gcc -fopenmp -O3 -march=native benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+export OMP_NUM_THREADS=4
+./bench_2mm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DIFFERENT PROBLEM SIZES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Small (fast testing)
+gcc -fopenmp -O3 -march=native -DSMALL \
+    benchmark_2mm.c benchmark_metrics.c -o bench_2mm_small -lm
+
+# Medium (standard benchmarking)
+gcc -fopenmp -O3 -march=native -DMEDIUM \
+    benchmark_2mm.c benchmark_metrics.c -o bench_2mm_medium -lm
+
+# Large (stress test)
+gcc -fopenmp -O3 -march=native -DLARGE \
+    benchmark_2mm.c benchmark_metrics.c -o bench_2mm_large -lm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ OPTIMIZATION LEVEL COMPARISON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+gcc -fopenmp -O2 -march=native benchmark_2mm.c benchmark_metrics.c -o bench_O2 -lm
+gcc -fopenmp -O3 -march=native benchmark_2mm.c benchmark_metrics.c -o bench_O3 -lm
+gcc -fopenmp -Ofast -march=native benchmark_2mm.c benchmark_metrics.c -o bench_Ofast -lm
+
+# Run comparison
+for opt in O2 O3 Ofast; do
+    echo "=== $opt ==="
+    OMP_NUM_THREADS=4 ./bench_$opt | head -20
+done
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ THREAD SCALING STUDY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+gcc -fopenmp -O3 -march=native benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+for threads in 1 2 4 8; do
+    export OMP_NUM_THREADS=$threads
+    echo "════════════════════════════════════════"
+    echo "Testing with $threads threads"
+    echo "════════════════════════════════════════"
+    ./bench_2mm
+done
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PROFILE-GUIDED OPTIMIZATION (PGO) - Maximum Performance
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Step 1: Build with instrumentation
+gcc -fopenmp -O3 -march=native -fprofile-generate \
+    benchmark_2mm.c benchmark_metrics.c -o bench_prof -lm
+
+# Step 2: Run to collect profile
+./bench_prof
+
+# Step 3: Rebuild with profile data
+gcc -fopenmp -O3 -march=native -fprofile-use \
+    benchmark_2mm.c benchmark_metrics.c -o bench_pgo -lm
+
+# Step 4: Run optimized version
+./bench_pgo
+
+# Step 5: Cleanup
+rm -f *.gcda
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ AUTOMATED TESTING SCRIPT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Full test suite (all sizes, all optimizations)
+./build_test.sh
+
+# Quick test (SMALL size, O3 only)
+./build_test.sh -q
+
+# Verbose output
+./build_test.sh -v
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ PERFORMANCE PROFILING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Build with debug symbols
+gcc -fopenmp -O3 -march=native -g benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+# Basic performance counters
+perf stat -e cycles,instructions,cache-misses,L1-dcache-load-misses ./bench_2mm
+
+# Detailed profiling
+perf record -g ./bench_2mm
+perf report
+
+# Cache analysis
+perf stat -e cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses ./bench_2mm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DEBUG BUILDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Thread sanitizer (find race conditions)
+gcc -fopenmp -O1 -g -fsanitize=thread \
+    benchmark_2mm.c benchmark_metrics.c -o bench_tsan -lm
+./bench_tsan
+
+# Address sanitizer (memory errors)
+gcc -fopenmp -O1 -g -fsanitize=address \
+    benchmark_2mm.c benchmark_metrics.c -o bench_asan -lm
+./bench_asan
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ RUNTIME ENVIRONMENT VARIABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Set thread count
+export OMP_NUM_THREADS=4
+
+# Thread pinning (improve cache locality)
+export OMP_PROC_BIND=true
+export OMP_PLACES=cores
+
+# Scheduling policy
+export OMP_SCHEDULE="static,32"    # Static with chunk 32
+export OMP_SCHEDULE="dynamic,16"   # Dynamic with chunk 16
+export OMP_SCHEDULE="guided"       # Guided scheduling
+
+# Combined optimal settings
+export OMP_NUM_THREADS=4
+export OMP_PROC_BIND=true
+export OMP_PLACES=cores
+./bench_2mm
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GENERATE ASSEMBLY (for analysis)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+gcc -fopenmp -O3 -march=native -S -fverbose-asm \
+    benchmark_2mm.c -o benchmark_2mm.s
+
+# View vectorized code
+grep -A 5 "vmulpd\|vfmadd" benchmark_2mm.s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ VIEW OPTIMIZATION DECISIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# See what got vectorized
+gcc -fopenmp -O3 -march=native \
+    -fopt-info-vec-optimized -fopt-info-vec-missed \
+    benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm 2>&1 | grep -i vector
+
+# Full optimization report
+gcc -fopenmp -O3 -march=native \
+    -fopt-info-all=optimization_report.txt \
+    benchmark_2mm.c benchmark_metrics.c -o bench_2mm -lm
+
+cat optimization_report.txt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SYSTEM INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# CPU info
+lscpu | grep -E "Model name|CPU\(s\)|Thread|Core|Cache"
+
+# Cache sizes
+cat /sys/devices/system/cpu/cpu0/cache/index*/size
+
+# OpenMP version
+echo | gcc -fopenmp -dM -E - | grep -i openmp
+
+# Available CPU flags
+cat /proc/cpuinfo | grep flags | head -1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ONE-LINER BENCHMARKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Compare O2 vs O3 vs Ofast quickly
+for opt in O2 O3 Ofast; do 
+    gcc -fopenmp -$opt -march=native benchmark_2mm.c benchmark_metrics.c -o b -lm
+    echo -n "$opt: "
+    OMP_NUM_THREADS=4 ./b | grep Sequential | awk '{print $2}'
+done
+
+# Test different thread counts
+gcc -fopenmp -O3 -march=native benchmark_2mm.c benchmark_metrics.c -o b -lm
+for t in 1 2 4 8; do 
+    echo -n "$t threads: "
+    OMP_NUM_THREADS=$t ./b | grep Sequential | awk '{print $2}'
+done
+
+# Find best performing strategy
+gcc -fopenmp -O3 -march=native benchmark_2mm.c benchmark_metrics.c -o b -lm
+OMP_NUM_THREADS=4 ./b | grep -v "^Strategy" | grep -v "^---" | \
+    awk 'NF==6 {print $1, $3}' | sort -k2 -n | head -1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ COMMON ISSUES & FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Issue: "undefined reference to omp_get_wtime"
+Fix:   gcc -fopenmp ...
+
+Issue: "undefined reference to sqrt"
+Fix:   gcc ... -lm
+
+Issue: Slow performance
+Fix:   export OMP_PROC_BIND=true
+       export OMP_PLACES=cores
+
+Issue: Want reproducible results
+Fix:   Use -O3 instead of -Ofast
+       Disable turbo: echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TIP: Save this file as a quick reference. Most commands can be copy-pasted
+     directly into your terminal!
