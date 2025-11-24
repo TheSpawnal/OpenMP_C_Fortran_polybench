@@ -28,7 +28,7 @@
 #include <omp.h>
 #include <stdlib.h>
 
-static long num_steps = 1000000;
+static long num_steps = 100000000;
 double step;
 
 void calculate_pi(int num_threads)
@@ -72,7 +72,7 @@ int main()
     printf("SPMD Parallel Pi Calculation - Speedup Report\n");
     printf("==============================================\n");
     
-    for (int t = 1; t <= 8; t *= 2) {
+    for (int t = 1; t <= 8; t++) {
         calculate_pi(t);
     }
     

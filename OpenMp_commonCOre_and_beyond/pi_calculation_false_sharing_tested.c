@@ -6,7 +6,7 @@ static long num_steps = 100000000;
 double step;
 
 #define PAD 8
-#define MAX_THREADS 16
+#define MAX_THREADS 8
 
 //V1: Original SPMD with strided access
 void calculate_pi_strided(int num_threads){      
