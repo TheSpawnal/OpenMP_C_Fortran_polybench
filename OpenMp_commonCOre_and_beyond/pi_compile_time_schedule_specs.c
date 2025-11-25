@@ -12,7 +12,7 @@ guided: decreasing chunk sizes, balance between static/dynamic
 auto: compiler/runtime decides
 
 The CSV output reveals which schedule conquers your workload.*/
-
+#include <string.h>
 #include <stdio.h>
 #include <omp.h>
 
@@ -81,7 +81,7 @@ void test_schedule(const char* schedule_type, int chunk_size, int num_threads) {
     pi = step * sum;
     run_time = omp_get_wtime() - start_time;
     
-    printf("%s,%d,%d,%.10f,%.6f\n", 
+    printf("%s\t,%d\t,%d\t,%.10f\t,%.6f\n", 
            schedule_type, 
            chunk_size > 0 ? chunk_size : 0, 
            num_threads, 
