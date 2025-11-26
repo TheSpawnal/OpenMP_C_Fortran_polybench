@@ -1,4 +1,8 @@
-//simple SPMD producer/consumer program
+/*simple SPMD producer/consumer program
+Pattern where on thread produces values that another thread consumes.
+Often used with a stream of produced values to implement "pipeline parallelim".
+The key is to implement pairwise synchronization between threads.
+*/
 #include "omp.h"
 #ifndef APPLE
 #include <malloc.h>
