@@ -1,3 +1,21 @@
+/*
+**  PROGRAM: Mandelbrot area (solution)
+**
+**  PURPOSE: Program to compute the area of a  Mandelbrot set.
+**           The correct answer should be around 1.510659.
+**
+**  USAGE:   Program runs without input ... just run the executable
+**
+**  ADDITIONAL EXERCISES:  Experiment with the schedule clause to fix 
+**               the load imbalance.   Experiment with atomic vs. critical vs.
+**               reduction for numoutside.
+**            
+**  HISTORY: Written:  (Mark Bull, August 2011).
+**
+**           Changed "comples" to "d_comples" to avoid collsion with 
+**           math.h complex type.   Fixed data environment errors
+**          (Tim Mattson, September 2011)
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
